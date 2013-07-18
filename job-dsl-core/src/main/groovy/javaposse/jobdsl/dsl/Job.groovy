@@ -28,6 +28,8 @@ public class Job {
     @Delegate TopLevelHelper helperTopLevel
     @Delegate MavenHelper helperMaven
     @Delegate BuildParametersContextHelper helperBuildParameters
+    @Delegate MatrixHelper helperMatrix
+    @Delegate TerracottaHelper helperTerracotta
 
     public Job(JobManagement jobManagement, Map<String, Object> arguments=[:]) {
         this.jobManagement = jobManagement;
@@ -44,6 +46,8 @@ public class Job {
         helperTopLevel = new TopLevelHelper(withXmlActions, type)
         helperMaven = new MavenHelper(withXmlActions, type)
         helperBuildParameters = new BuildParametersContextHelper(withXmlActions, type)
+        helperMatrix = new MatrixHelper(withXmlActions, type)
+        helperTerracotta = new TerracottaHelper(withXmlActions, type)
     }
 
     /**
@@ -163,6 +167,7 @@ public class Job {
             case JobType.Freeform: return emptyTemplate
             case JobType.Maven: return emptyMavenTemplate
             case JobType.Multijob: return emptyMultijobTemplate
+            case JobType.Matrix: return emptyMatrixTemplate
         }
     }
 
@@ -237,5 +242,45 @@ public class Job {
   <publishers/>
   <buildWrappers/>
 </com.tikal.jenkins.plugins.multijob.MultiJobProject>
+'''
+
+    def emptyMatrixTemplate = '''<?xml version='1.0' encoding='UTF-8'?>
+<matrix-project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <scm class="hudson.scm.SubversionSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers class="vector"/>
+  <concurrentBuild>false</concurrentBuild>
+  <axes>
+    <hudson.matrix.JDKAxis>
+      <name>jdk</name>
+      <values/>
+    </hudson.matrix.JDKAxis>
+    <hudson.matrix.TextAxis>
+      <name>appserver</name>
+      <values/>
+    </hudson.matrix.TextAxis>
+  </axes>
+  <builders>
+    <hudson.tasks.Maven>
+      <targets>-V clean verify -Psystem-tests -Dappserver=${appserver}</targets>
+      <mavenName>Maven 3</mavenName>
+      <usePrivateRepository>false</usePrivateRepository>
+      <settings class="jenkins.mvn.DefaultSettingsProvider"/>
+      <globalSettings class="jenkins.mvn.DefaultGlobalSettingsProvider"/>
+    </hudson.tasks.Maven>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+  <executionStrategy class="hudson.matrix.DefaultMatrixExecutionStrategyImpl">
+    <runSequentially>false</runSequentially>
+  </executionStrategy>
+</matrix-project>
 '''
 }
